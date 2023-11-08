@@ -6,8 +6,8 @@ import HomeSite from './components/Site/HomeSite/HomeSite';
 function App() {
   return (
     <>
-       {/* <HomeAdmin></HomeAdmin> */}
-       <HomeSite></HomeSite>
+       <HomeAdmin></HomeAdmin>
+       {/* <HomeSite></HomeSite> */}
     </>
   );
 }

@@ -1,28 +1,29 @@
 header {
-    padding: 20px;
+    height: 70px;
     display: flex;
     justify-content: space-between;
     width: 100%;
-    border-bottom: 1px solid black;
+    box-shadow: 0 1px 1px rgba(0,0,0,.15);
     align-items: center;
+    padding: 20px;
 }
 .header_left i{
-  margin-left: 15px;
+  margin-left: 30px;
 }
 img {
     width: 100%;
     height: 100%;
 }
 .logo {
-    height: 30px;
+    height: 20px;
     margin-right: 15px;
+    display: flex;
 }
-.avatar {
-    height: 50px;
-}
+
 .avatar img {
     border-radius: 50%;
-    width: 50px;
+    width: 36px;
+    height: 36px;
 }
 .header_right {
     display: flex;
