@@ -12,7 +12,7 @@ import dataArray1 from '../DataAdmin';
 
 function HomeAdmin(props) {
   const [hidden, setHidden] = useState(false);
-  const [clickedLinkId, setClickedLinkId] = useState(null);
+  const [clickedLinkId, setClickedLinkId] = useState(1);
   return (
     <BrowserRouter>
       <div className='container-fluid admin'>

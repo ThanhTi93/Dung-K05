@@ -1,0 +1,36 @@
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 15px;
+  }
+  
+  td {
+    text-align: center;
+    vertical-align: middle;
+    padding: 10px;
+  }
+  th {
+    text-align: center !important; /* Căn giữa ngang */
+    vertical-align: middle; /* Căn giữa dọc */
+    padding: 10px; /* Khoảng cách bên trong ô (tuỳ chọn) */
+  }
+  
+@media screen and (min-width:741px) {
+    .add-category {
+        display: flex;
+        justify-content: end;
+    }
+  
+}
+
+@media screen and (max-width:740px) {
+    
+    .add-category {
+        margin-top: 10px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 10px;
+    }
+}
