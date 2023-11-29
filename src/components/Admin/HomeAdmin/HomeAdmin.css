@@ -59,9 +59,7 @@ a {
     justify-content: center;
     align-items: center;
 }
-.group.clicked {
-    color: red;
-  }
+
 @media screen and (min-width:741px) {
     .left_mobile {
         display: none;
@@ -79,6 +77,12 @@ a {
         background-color: #272c33 !important;
         padding: 0 20px;
         color: white !important;
+        .navbar-brand {
+             color: white !important;
+        }
+        .navbar-toggler i {
+            color: white !important;
+        }
     }
     .left_laptop {
         display: none;
@@ -94,4 +98,20 @@ a {
     .left_mobile .nav-link {
        margin-left: 20px;
       }
+      .nav-link {
+        color: white !important;       
+      }
+      .nav-item {
+        color: white;
+        &:hover .nav-link {
+            color: #0b58ca !important;       
+          }
+      }
+   
+      .logo {
+        color: white !important;
+      }
 }
+.clicked {
+    color: red !important;
+   }

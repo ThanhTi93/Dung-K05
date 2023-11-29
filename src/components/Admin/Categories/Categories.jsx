@@ -18,9 +18,8 @@ function Categories(props) {
   const [iconCategory, setIconCategory] = useState("");
   const [categories, setCategories] = useState([]);
   const [update, setUpdate] = useState(false);
-  const [nameCategoryError, setNameCategoryError] = useState('');
-  const [iconCategoryError, setIconCategoryError] = useState('');
   const [editingIndex, setEditingIndex] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
   // Pagination state
   const [currentPage, setCurrentPage] = useState(0);
   const [itemsPerPage] = useState(5); // You can adjust the number of items per page
@@ -47,21 +46,6 @@ function Categories(props) {
 
   const addCategory = async () => {
     try {
-      // Validation logic
-      if (nameCategory.trim() === '' || nameCategory.length < 5) {
-        setNameCategoryError('Name Category is required and must be at least 5 characters');
-        return;
-      } else {
-        setNameCategoryError('');
-      }
-
-      if (iconCategory.trim() === '' || iconCategory.length < 5) {
-        setIconCategoryError('Icon Category is required and must be at least 5 characters');
-        return;
-      } else {
-        setIconCategoryError('');
-      }
-
       await addDoc(categoriesCollectionRef, {
         nameCategory: nameCategory,
         iconCategory: iconCategory
@@ -85,29 +69,43 @@ function Categories(props) {
     }
   };
 
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
+    setCurrentPage(0); // Reset page to 0 when the search term changes
+  };
+
+  useEffect(() => {
+    // Filter categories based on the search term
+    const filteredCategories = categories.filter(category =>
+      category.nameCategory.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    setCategories(filteredCategories);
+  }, [searchTerm]);
+
+
+
   return (
-    <div className="container categories p-3">
-      <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title" id="exampleModalLabel">Add Category</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    <div className="container categories p-3">       
+      <div className="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div className="modal-dialog">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h5 className="modal-title" id="exampleModalLabel">Add Category</h5>
+              <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
-              <div class="mb-3">
-                <label for="categoryName" class="form-label">Name Category:</label>
-                <input type="text" value={nameCategory} onChange={(e) => setNameCategory(e.target.value)} class="form-control" id="categoryName" placeholder="Enter category name" />
-                {nameCategoryError && <div className="text-danger">{nameCategoryError}</div>}
+            <div className="modal-body">
+              <div className="mb-3">
+                <label for="categoryName" className="form-label">Name Category:</label>
+                <input type="text" value={nameCategory} onChange={(e) => setNameCategory(e.target.value)} className="form-control" id="categoryName" placeholder="Enter category name" required/>               
               </div>
-              <div class="mb-3">
-                <label for="categoryIcon" class="form-label">Icon Category:</label>
-                <input type="text" value={iconCategory} onChange={(e) => setIconCategory(e.target.value)} class="form-control" id="categoryIcon" placeholder="Enter category icon" />
+              <div className="mb-3">
+                <label for="categoryIcon" className="form-label">Icon Category:</label>
+                <input  type="text" value={iconCategory} onChange={(e) => setIconCategory(e.target.value)} className="form-control" id="categoryIcon" placeholder="Enter category icon" required/>    
               </div>
             </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-              <button type="button" onClick={addCategory} data-bs-dismiss="modal" class="btn btn-success">Add Category</button>
+            <div className="modal-footer">
+              <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+              <button type="submit" onClick={addCategory} className="btn btn-success">Add Category</button>
             </div>
           </div>
         </div>
@@ -117,20 +115,21 @@ function Categories(props) {
           <h4>List Categories</h4>
         </div>
         <div className="col-12 col-md-5 col-xl-6">
-          <form class="d-flex">
-            <input class="form-control me-2" type="search" placeholder="Search..." aria-label="Search" />
-            <button class="btn btn-success" type="submit">Search</button>
+          <form className="d-flex">
+            <input className="form-control me-2" type="search" placeholder="Search..." aria-label="Search" value={searchTerm}
+              onChange={handleSearchChange} />
+            <button className="btn btn-success" type="submit">Search</button>
           </form>
         </div>
 
         <div className="col-12 col-md-3 col-xl-3 add-category">
-          <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#exampleModal">
+          <button type="button" className="btn btn-success" data-bs-toggle="modal" data-bs-target="#exampleModal">
             Add Category
           </button>
         </div>
       </div>
 
-      <table class="table table-striped mt-5">
+      <table className="table table-striped mt-5">
         <thead>
           <tr>
             <th scope="col">#</th>
@@ -151,19 +150,19 @@ function Categories(props) {
               ) : (
                 element.nameCategory
               )}</td>
-              <td><i class={element.iconCategory}></i></td>
+              <td><i className={element.iconCategory}></i></td>
               <td>
                 {
                   editingIndex === element.id ? (
                     <>
-                      <button type="button" class="btn btn-success"><i class="fa-solid fa-check"></i></button>
-                      <button type="button" onClick={() => deleteCategory(element.id)} class="btn btn-danger ms-2"><i class="fa-solid fa-trash-can"></i></button>
+                      <button type="button" className="btn btn-success"><i className="fa-solid fa-check"></i></button>
+                      <button type="button" onClick={() => deleteCategory(element.id)} className="btn btn-danger ms-2"><i className="fa-solid fa-trash-can"></i></button>
                     </>
 
                   ) : (
                     <>
-                      <button type="button" onClick={() => setEditingIndex(element.id)} class="btn btn-primary"><i class="fa-solid fa-pen-to-square"></i></button>
-                      <button type="button" onClick={() => deleteCategory(element.id)} class="btn btn-danger ms-2"><i class="fa-solid fa-trash-can"></i></button>
+                      <button type="button" onClick={() => setEditingIndex(element.id)} className="btn btn-primary"><i className="fa-solid fa-pen-to-square"></i></button>
+                      <button type="button" onClick={() => deleteCategory(element.id)} className="btn btn-danger ms-2"><i className="fa-solid fa-trash-can"></i></button>
                     </>
                   )
                 }
@@ -206,7 +205,6 @@ function Categories(props) {
           </li>
         </ul>
       </nav>
-
     </div>
   );
 }
