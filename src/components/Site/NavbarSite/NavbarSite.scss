@@ -1,0 +1,12 @@
+@media screen and (min-width:741px){
+    .navbar-mobile {
+        display: none;
+        a:nth-child(1) {
+            margin-left: 1rem;
+          }
+    }
+}
+.navbar-laptop {
+  background-image: url(https://img.freepik.com/free-vector/flat-christmas-twitch-banner_23-2149177743.jpg?w=1800&t=st=1701410735~exp=1701411335~hmac=ab369da37550966081d2774d309e0b710c4eae30ef431ca73f8f22aec390a7dc) !important;
+}
+

@@ -1,0 +1,96 @@
+
+.product-mobile {
+    h1 {
+        color: white;
+        font-size: 20px !important;
+    }
+}
+.product button {
+    display: none;
+}
+
+.product:hover button {
+    display: block;
+}
+
+
+
+li {
+    color: white;
+}
+a {
+    color: inherit; /* hoặc color: initial; */
+    text-decoration: none; /* (tùy chọn) loại bỏ gạch chân mặc định */
+  }  
+.product-mobile {
+    box-shadow: rgba(50, 50, 93, 0.25) 0px 13px 27px -5px, rgba(0, 0, 0, 0.3) 0px 8px 16px -8px;
+    background-color: #ffffff;
+    border-radius: 10px;
+    padding: 10px;
+    height: 390px;
+}
+
+.product-mobile span {
+    height: 20px;
+    display: inline-flex;
+    align-items: center;
+    background: linear-gradient(to right, #e91f63, #db2663);
+    border-radius: 20px;
+    color: white;
+    font-size: 10px;
+    margin-top: 10px;
+    padding-right: 10px;
+}
+
+.product-mobile span img {
+    width: 20px;
+    height: 20px;
+}
+.product-mobile p {
+    font-size: 10px;
+}
+.product-mobile h6{
+    font-size: 14px;
+}
+.product-mobile h5{
+    font-size: 14px;
+    text-decoration: line-through;
+}
+.product-mobile h3{
+    font-size: 14px;
+    color: red;
+}
+.product-mobile i{
+    font-size: 14px;
+    color:orange;
+}
+.row {
+    --bs-gutter-x: 1rem !important;
+}
+a {
+    font-size:14px;
+    font-weight:700
+  }
+  .superNav {
+    font-size:13px;
+  }
+  .form-control {
+    outline:none !important;
+    box-shadow: none !important;
+  }
+  @media screen and (max-width:540px){
+    .centerOnMobile {
+      text-align:center
+    }
+    
+  }
+
+
+@media screen and (max-width:740px) {
+    .product img {
+        height: 70%;
+    }
+    .navbar-laptop {
+        display: none;
+    }
+}
