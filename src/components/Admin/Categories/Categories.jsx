@@ -28,7 +28,6 @@ function Categories(props) {
   const indexOfLastItem = (currentPage + 1) * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = categories.slice(indexOfFirstItem, indexOfLastItem);
-
   // Change page
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
@@ -85,7 +84,7 @@ function Categories(props) {
 
 
   return (
-    <div className="container categories p-3">       
+    <div className="container categories p-3">
       <div className="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
         <div className="modal-dialog">
           <div className="modal-content">
@@ -96,11 +95,11 @@ function Categories(props) {
             <div className="modal-body">
               <div className="mb-3">
                 <label for="categoryName" className="form-label">Name Category:</label>
-                <input type="text" value={nameCategory} onChange={(e) => setNameCategory(e.target.value)} className="form-control" id="categoryName" placeholder="Enter category name" required/>               
+                <input type="text" value={nameCategory} onChange={(e) => setNameCategory(e.target.value)} className="form-control" id="categoryName" placeholder="Enter category name" required />
               </div>
               <div className="mb-3">
                 <label for="categoryIcon" className="form-label">Icon Category:</label>
-                <input  type="text" value={iconCategory} onChange={(e) => setIconCategory(e.target.value)} className="form-control" id="categoryIcon" placeholder="Enter category icon" required/>    
+                <input type="text" value={iconCategory} onChange={(e) => setIconCategory(e.target.value)} className="form-control" id="categoryIcon" placeholder="Enter category icon" required />
               </div>
             </div>
             <div className="modal-footer">
