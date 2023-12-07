@@ -1,7 +1,8 @@
+import { Table, Image, Modal, Button, Form, FormControl, InputGroup, Navbar, Nav } from 'react-bootstrap';
 import React, { useEffect, useState } from "react";
 import { db } from "../../../firebase";
 import { storage } from "../../../firebase";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import { v4 as uuidv4 } from "uuid";
 import {
     collection,
@@ -15,30 +16,85 @@ import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 function Products(props) {
-
-    const categoriesCollectionRef = collection(db, "Categories");
-    const [update, setUpdate] = useState(false);
-    const [categories, setCategories] = useState([]);
-
     const productsCollectionRef = collection(db, "Products");
-    const [products, setProducts] = useState([]);
+    const categoriesCollectionRef = collection(db, "Categories");
+    const [categories, setCategories] = useState([]);
+    const [Products, setProducts] = useState([]);
+    const [update, setUpdate] = useState(false);
+    const [showModal, setShowModal] = useState(false);
     const [imgUpload, setImgUpload] = useState(null);
     const [previewImg, setPreviewImg] = useState(null);
-    const [product, setProduct] = useState({
-        nameProduct: "",
-        imgProduct: "",
-        priceOld: "",
-        priceNew: "",
-        quantity: "",
-        categoryId: "",
-    });
+    const [editProducts, seteditProducts] = useState(null);
+    const [showEditModal, setShowEditModal] = useState(false);
 
-    const handleInputChange = (e) => {
+    const handleClose = () => setShowModal(false);
+    const handleShow = () => setShowModal(true);
+    // Get Products
+    useEffect(() => {
+        const fetchData = async () => {
+            const querySnapshot = await getDocs(productsCollectionRef);
+            const ProductsData = [];
+            querySnapshot.forEach((doc) => {
+                ProductsData.push({ id: doc.id, ...doc.data() });
+            });
+            setProducts(ProductsData);
+        };
+        fetchData();
+    }, [update]);
+    // Get Categories
+    useEffect(() => {
+        const fetchData = async () => {
+            const querySnapshot = await getDocs(categoriesCollectionRef);
+            const categoriesData = [];
+            querySnapshot.forEach((doc) => {
+                categoriesData.push({ id: doc.id, ...doc.data() });
+            });
+            setCategories(categoriesData);
+        };
+        fetchData();
+    }, [update]);
+    console.log(categories);
+    // Add User
+    const handleAddProduct = async (event) => {
+        event.preventDefault();
 
-        const { name, value } = e.target;
-        setProduct({ ...product, [name]: value });
+        // Get form data
+        const formData = new FormData(event.target);
+        const productName = formData.get("formProductName");
+        const priceOld = formData.get("formPriceOld");
+        const priceNew = formData.get("formPriceNew");
+        const discount = formData.get("formDiscount");
+        const stock = formData.get("formStock");
+        const category = formData.get("formCategory");
+
+        // Upload product image to storage
+        const productImgRef = ref(storage, `products/${uuidv4()}`);
+        await uploadBytes(productImgRef, imgUpload);
+
+        // Get download URL for the product image
+        const productImgURL = await getDownloadURL(productImgRef);
+
+        // Add product to Firestore
+        await addDoc(productsCollectionRef, {
+            productImgURL,
+            productName,
+            priceOld,
+            priceNew,
+            discount,
+            stock,
+            category,
+        });
+
+        // Display success message
+        toast("Product added successfully");
+
+        // Close the modal
+        handleClose();
+        setPreviewImg(null);
+        setUpdate(!update);
     };
 
+    // Handle img Change
     const handleImageChange = (e) => {
         const selectedImg = e.target.files[0];
 
@@ -54,180 +110,327 @@ function Products(props) {
             setImgUpload(null);
         }
     };
-
-    useEffect(() => {
-        const fetchData = async () => {
-            // Fetch categories
-            const categoriesSnapshot = await getDocs(categoriesCollectionRef);
-            const categoriesData = [];
-            categoriesSnapshot.forEach((doc) => {
-                categoriesData.push({ id: doc.id, ...doc.data() });
-            });
-            setCategories(categoriesData);
-
-            // Fetch products with category names
-            const productsSnapshot = await getDocs(productsCollectionRef);
-            const productsData = [];
-            productsSnapshot.forEach((doc) => {
-                const productData = { id: doc.id, ...doc.data() };
-
-                // Find the category name based on categoryId
-                const category = categoriesData.find(cat => cat.id === productData.categoryId);
-                if (category) {
-                    productData.categoryName = category.nameCategory;
-                }
-
-                productsData.push(productData);
-            });
-            setProducts(productsData);
-        };
-
-        fetchData();
-    }, [update]);
-
-    const addProduct = async (e) => {
-        e.preventDefault();
-
+    // Delete User
+    const handleDeleteProduct = async (productId, productImgURL) => {
         try {
-            const imageRef = ref(storage, `images/${uuidv4()}_${imgUpload.name}`);
-            await uploadBytes(imageRef, imgUpload);
-            const downloadURL = await getDownloadURL(imageRef);
-            const newProduct = { ...product, imgProduct: downloadURL };
-            const docRef = await addDoc(productsCollectionRef, newProduct);
+            const filename = productImgURL.split('%2F').pop().split('?').shift();
+            await deleteDoc(doc(productsCollectionRef, productId));
+            // Create a reference to the file to delete
+            const desertRef = ref(storage, `products/${filename}`);
 
-            toast("Add Product Success!");
-            setUpdate(!update); // Trigger a re-fetch of categories
+            // Delete the file
+            deleteObject(desertRef);
+            // Update the state to trigger a re-render
+            setUpdate(!update);
 
-            // Clear the form fields
-            setProduct({
-                nameProduct: "",
-                imgProduct: "",
-                priceOld: "",
-                priceNew: "",
-                quantity: "",
-                categoryId: "",
-            });
+            toast("User deleted successfully");
         } catch (error) {
-            console.error('Error adding product: ', error);
-            toast.error('Error adding product. Please try again.');
+            console.error("Error deleting user: ", error);
+            toast.error("Error deleting user");
         }
     };
+    // Edit User
+    const handleShowEditModal = (product) => {
+        seteditProducts(product);
+        setPreviewImg(product.productImgURL);
+        setShowEditModal(true);
+    };
 
+    const handleCloseEditModal = () => {
+        seteditProducts(null);
+        setShowEditModal(false);
+        setPreviewImg(null);
+    };
+    // Get Category Name By Id
+    const getCategoryName = (id) => {
+        const categoryById = categories.find((category) => category.id == id);
+        // Check if categoryById is defined and has nameCategory property
+        if (categoryById) {
+            return categoryById.nameCategory;
+        }
+    }
+    const handleUpdateProduct = async (event) => {
+        event.preventDefault();
+
+        // Get form data
+        const formData = new FormData(event.target);
+        const productName = formData.get("formProductName");
+        const priceOld = formData.get("formPriceOld");
+        const priceNew = formData.get("formPriceNew");
+        const discount = formData.get("formDiscount");
+        const stock = formData.get("formStock");
+        const category = formData.get("formCategory");
+
+        // Upload product image to storage
+        const productImgRef = ref(storage, `products/${uuidv4()}`);
+        await uploadBytes(productImgRef, imgUpload);
+
+        // Get download URL for the product image
+        const productImgURL = await getDownloadURL(productImgRef);
+
+        // Update product in Firestore
+        await updateDoc(doc(productsCollectionRef, editProducts.id), {
+            productImgURL,
+            productName,
+            priceOld,
+            priceNew,
+            discount,
+            stock,
+            category,
+        });
+
+        // Close the modal
+        handleCloseEditModal();
+        setUpdate(!update);
+        setPreviewImg(null);
+    };
+
+    // Pagination state
+    const [currentPage, setCurrentPage] = useState(0);
+    const [itemsPerPage] = useState(5); // You can adjust the number of items per page
+    const totalPages = Math.ceil(Products.length / itemsPerPage);
+    // Pagination logic
+    const indexOfLastItem = (currentPage + 1) * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const currentItems = Products.slice(indexOfFirstItem, indexOfLastItem);
+    // Change page
+    const paginate = (pageNumber) => setCurrentPage(pageNumber);
     return (
         <>
-            <div className="container categories p-3">
-                {/* modal open  */}
-                <div class="modal fade" id="productModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-                    <div class="modal-dialog">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title" id="exampleModalLabel">Add Product</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                            <div class="modal-body">
-                                <form onSubmit={addProduct}>
-                                    <div class="mb-3">
-                                        <label for="productName" class="form-label">Product Name</label>
-                                        <input type="text" class="form-control" name="nameProduct"
-                                            value={product.nameProduct}
-                                            onChange={handleInputChange} required />
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="productImage" class="form-label">Product Image</label>
-                                        <input type="file" class="form-control" id="productImage" accept="image/*" onChange={handleImageChange} required />
-                                        <img id="previewImage" src={previewImg ? previewImg : 'https://suno.vn/blog/wp-content/uploads/2018/05/cach-chup-anh-san-pham-co-concept-758x400.jpg'} class="mt-2" style={{ maxWidth: "100%", maxHeight: "200px" }} alt="Preview" />
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="priceOld" class="form-label">Price (Old)</label>
-                                        <input type="number" class="form-control" name="priceOld"
-                                            value={product.priceOld}
-                                            onChange={handleInputChange} required />
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="priceNew" class="form-label">Price (New)</label>
-                                        <input type="number" class="form-control" name="priceNew"
-                                            value={product.priceNew}
-                                            onChange={handleInputChange} required />
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="quantity" class="form-label">Quantity</label>
-                                        <input type="number" class="form-control" name="quantity"
-                                            value={product.quantity}
-                                            onChange={handleInputChange} required />
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="category" class="form-label">Category</label>
-                                        <select class="form-select" name="categoryId"
-                                            value={product.categoryId}
-                                            onChange={handleInputChange} required>
-                                            <option value="" default disabled >Select product category</option>
-                                            {
-                                                categories.map((element, index) => (
-                                                    <option value={element.id}>{element.nameCategory}</option>
-                                                ))
-                                            }
-                                        </select>
-                                    </div>
-                                    <button type="submit" class="btn btn-primary">Add Product</button>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                {/* modal close */}
-                <div className="row mt-3 ">
-                    <div className="col-12 col-md-4 col-xl-3">
+            <div className="container">
+                <div className="row mt-4">
+                    <div className="col-12 col-md-4">
                         <h4>List Products</h4>
                     </div>
-                    <div className="col-12 col-md-5 col-xl-6">
-                        <form class="d-flex">
-                            <input class="form-control me-2" type="search" placeholder="Search..." aria-label="Search" />
-                            <button class="btn btn-success" type="submit">Search</button>
-                        </form>
+                    <div className="col-12 col-md-4">
+                        <InputGroup className="mb-3">
+                            <FormControl placeholder="Search Products" />
+                            <Button variant="outline-secondary">Search</Button>
+                        </InputGroup>
                     </div>
-
-                    <div className="col-12 col-md-3 col-xl-3 add-category">
-                        <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#productModal">
-                            Add Product
-                        </button>
+                    <div className="col-12 col-md-4 text-md-end">
+                        <Button variant="success" onClick={handleShow}>
+                            Add Products
+                        </Button>
                     </div>
                 </div>
-                <div className="table-responsive mt-5">
-                    <table className="table table-striped">
+                <div className="table-responsive mt-2">
+                    <Table striped bordered hover>
                         <thead>
                             <tr>
-                                <th scope="col">#</th>
-                                <th scope="col">Product Name</th>
-                                <th scope="col">Image</th>
-                                <th scope="col">Price (Old)</th>
-                                <th scope="col">Price (New)</th>
-                                <th scope="col">Quantity</th>
-                                <th scope="col">Category</th>
-                                <th scope="col">Action</th>
+                                <th>ID</th>
+                                <th>Img Product</th>
+                                <th>Name</th>
+                                <th>Price Old (VND)</th>
+                                <th>Price New (VND)</th>
+                                <th>Discount (%)</th>
+                                <th>Stock</th>
+                                <th>Category Product</th>
+                                <th>Action</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {products.map((product, index) => (
-                                <tr key={index}>
-                                    <th scope="row">{index + 1}</th>
-                                    <td>{product.nameProduct}</td>
+                            {currentItems.map((product, index) => (
+                                <tr key={product.id}>
+                                    <td>{index + 1 + currentPage * itemsPerPage}</td>
                                     <td>
-                                        <img src={product.imgProduct} alt="Product" style={{ maxWidth: "50px", maxHeight: "50px" }} />
+                                        <Image src={product.productImgURL}
+                                            alt={`Avatar of ${product.firstName}`}
+                                            style={{ width: '50px', height: '50px' }} />
                                     </td>
+                                    <td>{product.productName}</td>
                                     <td>{product.priceOld}</td>
                                     <td>{product.priceNew}</td>
-                                    <td>{product.quantity}</td>
-                                    <td>{product.categoryName}</td>
+                                    <td>{product.discount}</td>
+                                    <td>{product.stock}</td>
+                                    <td>{getCategoryName(product.category)}</td>
                                     <td>
-                                        <button type="button" class="btn btn-primary"><i class="fa-solid fa-pen-to-square"></i></button>
-                                        <button type="button" class="btn btn-danger ms-2"><i class="fa-solid fa-trash-can"></i></button>
+                                        <Button variant="primary" className='me-2' onClick={() => handleShowEditModal(product)}>
+                                            <i className="fa-solid fa-pen-to-square"></i>
+                                        </Button>
+                                        <Button variant="danger" onClick={() => handleDeleteProduct(product.id, product.productImgURL)}>
+                                            <i className="fa-solid fa-trash-can"></i>
+                                        </Button>
                                     </td>
                                 </tr>
                             ))}
                         </tbody>
-                    </table>
+                    </Table>
                 </div>
+                {/* Pagination */}
+                <nav aria-label="Page navigation example" className='mt-2'>
+                    <ul className="pagination justify-content-center">
+                        <li className={`page-item ${currentPage === 0 ? "disabled" : ""}`}>
+                            <a
+                                className="page-link"
+                                href="#"
+                                tabIndex="-1"
+                                aria-disabled="true"
+                                onClick={() => setCurrentPage(currentPage - 1)}
+                            >
+                                <i className="fa-solid fa-arrow-left"></i>
+                            </a>
+                        </li>
+                        {Array.from({ length: Math.ceil(Products.length / itemsPerPage) }, (_, index) => (
+                            <li className={`page-item ${currentPage === index ? 'active' : ''}`} key={index}>
+                                <a className="page-link" href="#" onClick={() => paginate(index)}>
+                                    {index + 1}
+                                </a>
+                            </li>
+                        ))}
+                        <li
+                            className={`page-item ${currentPage === totalPages - 1 ? "disabled" : ""}`}
+                        >
+                            <a
+                                className="page-link"
+                                href="#"
+                                onClick={() => setCurrentPage(currentPage + 1)}
+                            >
+                                <i className="fa-solid fa-arrow-right"></i>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
             </div>
+            <Modal show={showModal} onHide={handleClose}>
+                <Modal.Header closeButton>
+                    <Modal.Title>Add Product</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    {/* Your form for adding a product */}
+                    <Form onSubmit={handleAddProduct}>
+                        <Form.Group controlId="formProductName">
+                            <Form.Label>Name</Form.Label>
+                            <Form.Control type="text" name="formProductName" placeholder="Enter product name" />
+                        </Form.Group>
+                        <Form.Group controlId="formPriceOld">
+                            <Form.Label>Price Old (VND)</Form.Label>
+                            <Form.Control type="number" name="formPriceOld" placeholder="Enter price old" />
+                        </Form.Group>
+                        <Form.Group controlId="formPriceNew">
+                            <Form.Label>Price New (VND)</Form.Label>
+                            <Form.Control type="number" name="formPriceNew" placeholder="Enter price new" />
+                        </Form.Group>
+                        <Form.Group controlId="formDiscount">
+                            <Form.Label>Discount</Form.Label>
+                            <Form.Control type="number" name="formDiscount" placeholder="Enter discount percentage" />
+                        </Form.Group>
+                        <Form.Group controlId="formStock">
+                            <Form.Label>Stock</Form.Label>
+                            <Form.Control type="number" name="formStock" placeholder="Enter stock quantity" />
+                        </Form.Group>
+                        <Form.Group controlId="formCategory">
+                            <Form.Label>Category Product</Form.Label>
+                            <Form.Select name="formCategory" aria-label="Select product category">
+                                {categories.map((category) => (
+                                    <option value={category.id}>{category.nameCategory}</option>
+                                ))}
+                                {/* Add more options as needed */}
+                            </Form.Select>
+                        </Form.Group>
+                        <Form.Group controlId="formImgProduct">
+                            <Form.Label>Img Product</Form.Label>
+                            <Form.Control type="file" accept="image/*" onChange={handleImageChange} />
+                            <Image
+                                className='my-2'
+                                src={previewImg ? previewImg : 'https://suno.vn/blog/wp-content/uploads/2018/05/cach-chup-anh-san-pham-co-concept-758x400.jpg'}
+                                class="mt-2"
+                                style={{ maxWidth: "100%", maxHeight: "350px" }}
+                                alt="Selected Product Image"
+                            />
+                        </Form.Group>
+                        <Button variant="success" type="submit">
+                            Add Product
+                        </Button>
+                    </Form>
+                </Modal.Body>
+            </Modal>
+
+            <Modal show={showEditModal} onHide={handleCloseEditModal}>
+                <Modal.Header closeButton>
+                    <Modal.Title>Edit Products</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <Form onSubmit={handleUpdateProduct}>
+                        <Form.Group controlId="formEditProductName">
+                            <Form.Label>Name</Form.Label>
+                            <Form.Control
+                                type="text"
+                                name="formProductName"
+                                placeholder="Enter product name"
+                                defaultValue={editProducts ? editProducts.productName : ""}
+                            />
+                        </Form.Group>
+                        <Form.Group controlId="formEditPriceOld">
+                            <Form.Label>Price Old (VND)</Form.Label>
+                            <Form.Control
+                                type="number"
+                                name="formPriceOld"
+                                placeholder="Enter price old"
+                                defaultValue={editProducts ? editProducts.priceOld : ""}
+                            />
+                        </Form.Group>
+                        <Form.Group controlId="formEditPriceNew">
+                            <Form.Label>Price New (VND)</Form.Label>
+                            <Form.Control
+                                type="number"
+                                name="formPriceNew"
+                                placeholder="Enter price new"
+                                defaultValue={editProducts ? editProducts.priceNew : ""}
+                            />
+                        </Form.Group>
+                        <Form.Group controlId="formEditDiscount">
+                            <Form.Label>Discount</Form.Label>
+                            <Form.Control
+                                type="number"
+                                name="formDiscount"
+                                placeholder="Enter discount percentage"
+                                defaultValue={editProducts ? editProducts.discount : ""}
+                            />
+                        </Form.Group>
+                        <Form.Group controlId="formEditStock">
+                            <Form.Label>Stock</Form.Label>
+                            <Form.Control
+                                type="number"
+                                name="formStock"
+                                placeholder="Enter stock quantity"
+                                defaultValue={editProducts ? editProducts.stock : ""}
+                            />
+                        </Form.Group>
+                        <Form.Group controlId="formCategory">
+                            <Form.Label>Category Product</Form.Label>
+                            <Form.Select name="formCategory"
+                                defaultValue={editProducts ? editProducts.category : ""}
+                                aria-label="Select product category">
+                                {categories.map((category) => (
+                                    <option value={category.id}>{category.nameCategory}</option>
+                                ))}
+                                {/* Add more options as needed */}
+                            </Form.Select>
+                        </Form.Group>
+                        <Form.Group controlId="formEditImgProduct">
+                            <Form.Label>Img Product</Form.Label>
+                            <Form.Control
+                                type="file"
+                                accept="image/*"
+                                onChange={handleImageChange}
+                            />
+                            <Image
+                                className="my-2"
+                                src={previewImg ? previewImg : 'https://suno.vn/blog/wp-content/uploads/2018/05/cach-chup-anh-san-pham-co-concept-758x400.jpg'}
+                                class="mt-2"
+                                style={{ maxWidth: "100%", maxHeight: "350px" }}
+                                alt="Selected Product Image"
+                            />
+                        </Form.Group>
+                        {/* You may need to add similar code for other fields */}
+                        <Button variant="success" type="submit">
+                            Update Products
+                        </Button>
+                    </Form>
+                </Modal.Body>
+            </Modal>
+
         </>
     );
 }

@@ -1,6 +1,4 @@
-import { Table, Image, Modal, Button, Form, FormControl, InputGroup } from 'react-bootstrap';
-// Import biểu tượng từ 'react-icons/fa'
-import { FaEye, FaEyeSlash } from 'react-icons/fa';
+import { Table, Image, Modal, Button, Form, FormControl, InputGroup,Navbar, Nav } from 'react-bootstrap';
 import React, { useEffect, useState } from "react";
 import { db } from "../../../firebase";
 import { storage } from "../../../firebase";
@@ -17,31 +15,27 @@ import {
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-function Users(props) {
-    const usersCollectionRef = collection(db, "Users");
-    const [users, setUsers] = useState([]);
+function Employees(props) {
+    const employeesCollectionRef = collection(db, "Employees");
+    const [employees, setEmployees] = useState([]);
     const [update, setUpdate] = useState(false);
     const [showModal, setShowModal] = useState(false);
     const [imgUpload, setImgUpload] = useState(null);
     const [previewImg, setPreviewImg] = useState(null);
-    const [editUser, setEditUser] = useState(null);
+    const [editEmployees, seteditEmployees] = useState(null);
     const [showEditModal, setShowEditModal] = useState(false);
-    const [showPassword, setShowPassword] = useState(false);
 
-    const togglePasswordVisibility = () => {
-        setShowPassword(!showPassword);
-    };
     const handleClose = () => setShowModal(false);
     const handleShow = () => setShowModal(true);
 
     useEffect(() => {
         const fetchData = async () => {
-            const querySnapshot = await getDocs(usersCollectionRef);
-            const usersData = [];
+            const querySnapshot = await getDocs(employeesCollectionRef);
+            const employeesData = [];
             querySnapshot.forEach((doc) => {
-                usersData.push({ id: doc.id, ...doc.data() });
+                employeesData.push({ id: doc.id, ...doc.data() });
             });
-            setUsers(usersData);
+            setEmployees(employeesData);
         };
         fetchData();
     }, [update]);
@@ -57,12 +51,12 @@ function Users(props) {
         const phoneNumber = formData.get("formPhoneNumber");
         const birthday = formData.get("formBirthday"); // Make sure the input type is 'date'       
         // Upload avatar to storage
-        const avatarRef = ref(storage, `avatars/${uuidv4()}`);
+        const avatarRef = ref(storage, `employees/${uuidv4()}`);
         await uploadBytes(avatarRef, imgUpload);
         // Get download URL for the avatar
         const avatarURL = await getDownloadURL(avatarRef);
         // Add user to Firestore
-        await addDoc(usersCollectionRef, {
+        await addDoc(employeesCollectionRef, {
             firstName,
             lastName,
             email,
@@ -71,6 +65,7 @@ function Users(props) {
             birthday,
             avatarURL,
         });
+        toast.success("Employees add successfully");
         // Close the modal
         handleClose();
         setPreviewImg(null);
@@ -97,9 +92,9 @@ function Users(props) {
         try {
             console.log(avatarURL);
             const filename = avatarURL.split('%2F').pop().split('?').shift();
-            await deleteDoc(doc(usersCollectionRef, userId));
+            await deleteDoc(doc(employeesCollectionRef, userId));
             // Create a reference to the file to delete
-            const desertRef = ref(storage, `avatars/${filename}`);
+            const desertRef = ref(storage, `employees/${filename}`);
 
             // Delete the file
             deleteObject(desertRef);
@@ -114,13 +109,13 @@ function Users(props) {
     };
     // Edit User
     const handleShowEditModal = (user) => {
-        setEditUser(user);
+        seteditEmployees(user);
         setPreviewImg(user.avatarURL);
         setShowEditModal(true);
     };
 
     const handleCloseEditModal = () => {
-        setEditUser(null);
+        seteditEmployees(null);
         setShowEditModal(false);
         setPreviewImg(null);
     };
@@ -136,12 +131,12 @@ function Users(props) {
         const phoneNumber = formData.get("formPhoneNumber");
         const birthday = formData.get("formBirthday");
         // Upload avatar to storage
-        const avatarRef = ref(storage, `avatars/${uuidv4()}`);
+        const avatarRef = ref(storage, `employees/${uuidv4()}`);
         await uploadBytes(avatarRef, imgUpload);
         // Get download URL for the avatar
         const avatarURL = await getDownloadURL(avatarRef);
         // Update user in Firestore
-        await updateDoc(doc(usersCollectionRef, editUser.id), {
+        await updateDoc(doc(employeesCollectionRef, editEmployees.id), {
             firstName,
             lastName,
             email,
@@ -159,33 +154,33 @@ function Users(props) {
     // Pagination state
     const [currentPage, setCurrentPage] = useState(0);
     const [itemsPerPage] = useState(5); // You can adjust the number of items per page
-    const totalPages = Math.ceil(users.length / itemsPerPage);
+    const totalPages = Math.ceil(employees.length / itemsPerPage);
     // Pagination logic
     const indexOfLastItem = (currentPage + 1) * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-    const currentItems = users.slice(indexOfFirstItem, indexOfLastItem);
+    const currentItems = employees.slice(indexOfFirstItem, indexOfLastItem);
     // Change page
     const paginate = (pageNumber) => setCurrentPage(pageNumber);
     return (
         <>
-            <div className="container">
+            <div className="container">               
                 <div className="row mt-4">
                     <div className="col-12 col-md-4">
-                        <h4>List Users</h4>
+                        <h4>List Employees</h4>
                     </div>
                     <div className="col-12 col-md-4">
                         <InputGroup className="mb-3">
-                            <FormControl placeholder="Search users" />
+                            <FormControl placeholder="Search employees" />
                             <Button variant="outline-secondary">Search</Button>
                         </InputGroup>
                     </div>
                     <div className="col-12 col-md-4 text-md-end">
                         <Button variant="success" onClick={handleShow}>
-                            Add User
+                            Add Employees
                         </Button>
                     </div>
                 </div>
-                <div className="table-responsive">
+                <div className="table-responsive mt-2">
                     <Table striped bordered hover>
                         <thead>
                             <tr>
@@ -243,7 +238,7 @@ function Users(props) {
                                 <i className="fa-solid fa-arrow-left"></i>
                             </a>
                         </li>
-                        {Array.from({ length: Math.ceil(users.length / itemsPerPage) }, (_, index) => (
+                        {Array.from({ length: Math.ceil(employees.length / itemsPerPage) }, (_, index) => (
                             <li className={`page-item ${currentPage === index ? 'active' : ''}`} key={index}>
                                 <a className="page-link" href="#" onClick={() => paginate(index)}>
                                     {index + 1}
@@ -274,7 +269,6 @@ function Users(props) {
                         <Form.Group controlId="formFirstName">
                             <Form.Label>First Name</Form.Label>
                             <Form.Control type="text" name="formFirstName" placeholder="Enter first name" />
-
                         </Form.Group>
                         <Form.Group controlId="formLastName">
                             <Form.Label>Last Name</Form.Label>
@@ -283,18 +277,6 @@ function Users(props) {
                         <Form.Group controlId="formEmail">
                             <Form.Label>Email</Form.Label>
                             <Form.Control type="email" name="formEmail" placeholder="Enter email" />
-                        </Form.Group>
-                        <Form.Group controlId="formPassword">
-                            <Form.Label>Password</Form.Label>
-                            <InputGroup className='password'>
-                                <Form.Control
-                                    type={showPassword ? 'text' : 'password'}
-                                    placeholder="Enter your password"                             
-                                />
-                                <div className="icon-eyes" onClick={togglePasswordVisibility}>
-                                {showPassword ? (<i class="fa-solid fa-eye"></i>) : (<i class="fa-solid fa-eye-slash"></i>)}                               
-                                </div>                            
-                            </InputGroup>
                         </Form.Group>
                         <Form.Group controlId="formAddress">
                             <Form.Label>Address</Form.Label>
@@ -314,18 +296,18 @@ function Users(props) {
                                 type="file"
                                 accept="image/*" onChange={handleImageChange} />
                             <Image className='my-2'
-                                src={previewImg ? previewImg : 'https://suno.vn/blog/wp-content/uploads/2018/05/cach-chup-anh-san-pham-co-concept-758x400.jpg'} class="mt-2" style={{ maxWidth: "100%", maxHeight: "200px" }}
+                                src={previewImg ? previewImg : 'https://suno.vn/blog/wp-content/uploads/2018/05/cach-chup-anh-san-pham-co-concept-758x400.jpg'} class="mt-2" style={{ maxWidth: "100%", maxHeight: "350px" }}
                                 alt="Selected Avatar" />
                         </Form.Group>
                         <Button variant="success" type="submit">
-                            Add User
+                            Add Employees
                         </Button>
                     </Form>
                 </Modal.Body>
             </Modal>
             <Modal show={showEditModal} onHide={handleCloseEditModal}>
                 <Modal.Header closeButton>
-                    <Modal.Title>Edit User</Modal.Title>
+                    <Modal.Title>Edit Employees</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
                     <Form onSubmit={handleUpdateUser}>
@@ -335,7 +317,7 @@ function Users(props) {
                                 type="text"
                                 name="formFirstName"
                                 placeholder="Enter first name"
-                                defaultValue={editUser ? editUser.firstName : ""}
+                                defaultValue={editEmployees ? editEmployees.firstName : ""}
                             />
                         </Form.Group>
                         <Form.Group controlId="formEditLastName">
@@ -344,7 +326,7 @@ function Users(props) {
                                 type="text"
                                 name="formLastName"
                                 placeholder="Enter last name"
-                                defaultValue={editUser ? editUser.lastName : ""}
+                                defaultValue={editEmployees ? editEmployees.lastName : ""}
                             />
                         </Form.Group>
                         <Form.Group controlId="formEditEmail">
@@ -353,7 +335,7 @@ function Users(props) {
                                 type="email"
                                 name="formEmail"
                                 placeholder="Enter email"
-                                defaultValue={editUser ? editUser.email : ""}
+                                defaultValue={editEmployees ? editEmployees.email : ""}
                             />
                         </Form.Group>
                         <Form.Group controlId="formEditAddress">
@@ -362,7 +344,7 @@ function Users(props) {
                                 type="text"
                                 name="formAddress"
                                 placeholder="Enter address"
-                                defaultValue={editUser ? editUser.address : ""}
+                                defaultValue={editEmployees ? editEmployees.address : ""}
                             />
                         </Form.Group>
                         <Form.Group controlId="formEditPhoneNumber">
@@ -371,7 +353,7 @@ function Users(props) {
                                 type="tel"
                                 name="formPhoneNumber"
                                 placeholder="Enter phone number"
-                                defaultValue={editUser ? editUser.phoneNumber : ""}
+                                defaultValue={editEmployees ? editEmployees.phoneNumber : ""}
                             />
                         </Form.Group>
                         <Form.Group controlId="formEditBirthday">
@@ -380,7 +362,7 @@ function Users(props) {
                                 type="date"
                                 name="formBirthday"
                                 placeholder="Enter birthday"
-                                defaultValue={editUser ? editUser.birthday : ""}
+                                defaultValue={editEmployees ? editEmployees.birthday : ""}
                             />
                         </Form.Group>
                         <Form.Group controlId="formAvatar">
@@ -389,19 +371,18 @@ function Users(props) {
                                 type="file"
                                 accept="image/*" onChange={handleImageChange} />
                             <Image className='my-2'
-                                src={previewImg ? previewImg : 'https://suno.vn/blog/wp-content/uploads/2018/05/cach-chup-anh-san-pham-co-concept-758x400.jpg'} class="mt-2" style={{ maxWidth: "100%", maxHeight: "200px" }}
+                                src={previewImg ? previewImg : 'https://suno.vn/blog/wp-content/uploads/2018/05/cach-chup-anh-san-pham-co-concept-758x400.jpg'} class="mt-2" style={{ maxWidth: "100%", maxHeight: "350px" }}
                                 alt="Selected Avatar" />
                         </Form.Group>
                         {/* You may need to add similar code for the avatar field */}
                         <Button variant="success" type="submit">
-                            Update User
+                            Update Employees
                         </Button>
                     </Form>
                 </Modal.Body>
             </Modal>
-
         </>
     );
 }
 
-export default Users;
+export default Employees;

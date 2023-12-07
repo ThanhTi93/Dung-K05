@@ -9,6 +9,7 @@ import Orders from '../Orders/Orders';
 import Users from '../Users/Users';
 import Profile from '../Profile/Profile';
 import dataArray1 from '../DataAdmin';
+import Employees from "../Employees/Employees";
 
 function HomeAdmin(props) {
   const [hidden, setHidden] = useState(false);
@@ -76,6 +77,7 @@ function HomeAdmin(props) {
             <Route exact path="/products" element={<Products></Products>} />
             <Route exact path="/orders" element={<Orders></Orders>} />
             <Route exact path="/users" element={<Users></Users>} />
+            <Route exact path="/employees" element={<Employees></Employees>} />
             <Route exact path="/profile" element={<Profile></Profile>} />
           </Routes>
         </div>
